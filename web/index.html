@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador AFD</title>
+<style>
+:root{--g1:#0d0f98;--g2:#0d0f98;--bg:#f1f3fa;--card:#fff;--dg:#f7f8fd;--fg:#1e2235;--mu:#6b7288;--bd:#e0e4f0;--pr:#5b5bd6;--ac:#f97316;--acl:rgba(249,115,22,.22);--ok:#16a34a;--rj:#dc2626;--sh:0 1px 2px rgba(20,24,50,.06),0 10px 28px rgba(20,24,50,.07)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1120;--card:#171b2e;--dg:#11152a;--fg:#e8eaf6;--mu:#9aa1bd;--bd:#2a3050;--pr:#8b8bff;--ac:#fb923c;--acl:rgba(251,146,60,.26);--ok:#4ade80;--rj:#f87171;--sh:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.3)}}
+:root[data-theme=dark]{--bg:#0e1120;--card:#171b2e;--dg:#11152a;--fg:#e8eaf6;--mu:#9aa1bd;--bd:#2a3050;--pr:#8b8bff;--ac:#fb923c;--acl:rgba(251,146,60,.26);--ok:#4ade80;--rj:#f87171;--sh:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.3)}
+*{box-sizing:border-box}
+body{margin:0;font:15px system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg)}
+.w{max-width:1500px;margin:0 auto;padding:18px}
+.hd{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border-radius:16px;padding:18px 24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--sh)}
+.hd h1{margin:0;font-size:24px}
+.hd p{margin:3px 0 0;opacity:.9;font-size:14px}
+.hr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 14px;font:600 14px ui-monospace,monospace}
+.hd button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:6px 12px;border-radius:999px}
+.g{display:grid;gap:16px}
+@media(min-width:951px){
+.g{grid-template-columns:minmax(360px,460px) minmax(0,1fr);grid-template-rows:auto auto 1fr;align-items:start}
+#s1{grid-column:1;grid-row:1}
+#s2{grid-column:2;grid-row:1/span 3}
+#s3{grid-column:1;grid-row:2}
+#s4{grid-column:1;grid-row:3}}
+.p{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;box-shadow:var(--sh)}
+h2{display:flex;align-items:center;gap:10px;font-size:16px;margin:0 0 14px}
+.n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;font-size:13px;font-weight:700}
+.s{color:var(--mu);font-size:13px;margin:5px 0 0;line-height:1.45}
+.f{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+label{display:flex;flex-direction:column;font-size:13px;font-weight:600;gap:4px;flex:1 1 170px}
+label .s{font-weight:400}
+input[type=text],input[type=number]{width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;background:var(--dg);color:var(--fg);font:inherit}
+input:focus{outline:2px solid var(--pr);border-color:transparent}
+input[type=checkbox]{accent-color:var(--pr)}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;padding:8px 14px;transition:.15s}
+button:hover{border-color:var(--pr)}
+button:disabled{opacity:.4;cursor:default}
+button.go{border:0;color:#fff;font-weight:600;background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 3px 10px rgba(99,102,241,.35)}
+button.go:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.tabs{display:flex;background:var(--dg);border:1px solid var(--bd);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--mu);font-weight:600;font-size:13px;padding:8px 10px;border-radius:9px}
+.tabs button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.35)}
+.ex{margin-top:12px;font-size:13px;color:var(--mu);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ex button{padding:4px 12px;font-size:13px;border-radius:999px;background:var(--dg);color:var(--fg)}
+.ex button.go{color:#fff; padding:8px 16px;font-size:15px;border-radius:10px;background:linear-gradient(135deg,var(--g1),var(--g2))}
+.ex button.chip{font:700 15px ui-monospace,monospace;width:38px;padding:5px 0;border-radius:10px}
+.dg{background:var(--dg);border:1px solid var(--bd);border-radius:12px;padding:6px}
+svg{display:block;width:100%;height:auto;max-height:62vh}
+.ar{fill:none;stroke:#8a93a8;stroke-width:1.9;marker-end:url(#mg)}
+.ar.u{stroke:var(--ac);stroke-width:3;marker-end:url(#mh)}
+.ar.a{stroke-width:5}
+.lb{font-size:14px;font-weight:600;text-anchor:middle;fill:var(--fg);paint-order:stroke;stroke:var(--dg);stroke-width:4px}
+.note{font-size:11px;text-anchor:middle;fill:var(--rj)}
+.nd{filter:drop-shadow(0 2px 4px rgba(0,0,0,.16))}
+.nd circle{fill:var(--card);stroke:var(--pr);stroke-width:2.5}
+.nd.q4 circle{stroke:var(--ok)}.nd.qr circle{stroke:var(--rj)}
+.nd.qr circle.m{fill:rgba(220,38,38,.08)}.nd.q4 circle.m{fill:rgba(22,163,74,.09)}
+.nd circle.i{fill:none}
+.nd text{fill:var(--fg);text-anchor:middle}
+.nd.vis circle.m{fill:var(--acl)}
+.nd.act circle.m{fill:var(--ac)}.nd.qr.act circle.m{fill:var(--rj)}
+.nd.act text{fill:#fff}
+.nd.act{filter:drop-shadow(0 0 9px var(--ac))}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 2px 2px;font-size:12.5px;color:var(--mu)}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:2px solid var(--pr)}
+.ruta{margin:14px 0 6px;font-size:15px;line-height:2.1}
+.pl{display:inline-block;padding:1px 11px;border-radius:999px;background:var(--dg);border:1px solid var(--bd);font-weight:600}
+.pl.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.pl.f2{opacity:.35}
+.arr{margin:0 6px;color:var(--mu)}
+.pg{height:6px;background:var(--bd);border-radius:6px;overflow:hidden;margin:4px 0 12px}
+.pg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g1),var(--g2));transition:width .3s}
+.msg{background:var(--dg);border:1px solid var(--bd);border-left:4px solid var(--pr);border-radius:10px;padding:12px 14px;line-height:1.6;margin-bottom:12px}
+.msg.good{border-left-color:var(--ok)}.msg.bad{border-left-color:var(--rj)}
+.ok,.no{padding:1px 10px;border-radius:999px;font-weight:700;font-size:13px}
+.ok{background:rgba(22,163,74,.16);color:var(--ok)}.no{background:rgba(220,38,38,.14);color:var(--rj)}
+.nav{display:flex;flex-wrap:wrap;gap:8px}
+table{border-collapse:separate;border-spacing:0;border:1px solid var(--bd);border-radius:10px;overflow:hidden;font-size:14px;margin-top:10px}
+th,td{padding:7px 15px;text-align:center;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+tr>*:last-child{border-right:0}tr:last-child>*{border-bottom:0}
+th{background:var(--dg);font-weight:700}
+td.gr{color:var(--mu);opacity:.65}
+td.u{background:var(--acl);color:var(--fg);opacity:1}
+td.a{background:var(--ac);color:#fff;font-weight:700;opacity:1}
+.tout{margin-top:12px;background:var(--dg);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font:13px/1.75 ui-monospace,monospace}
+.tout .h{color:var(--mu);font-weight:600;margin-top:6px}
+.tout .y{color:var(--ok)}.tout .z{color:var(--rj)}
+.tout .sm{margin-top:8px;font-weight:700}
+.sep{border:0;border-top:1px solid var(--bd);margin:8px 0}
+</style></head><body>
+<div class="w">
+<header class="hd"><div><h1>Simulador del AFD</h1><p>Atención de solicitudes web · Matemática Discreta II · Grupo D</p></div>
+<div class="hr"><span class="tag">M = (Q, Σ, δ, q₀, F)</span><button id="th">🌓 Tema</button></div></header>
+<div class="g">
+
+<div class="p" id="s1"><h2><span class="n">1</span>Elige qué quieres probar</h2>
+<div class="tabs"><button id="ta" class="on">A · Escribir los eventos yo mismo</button><button id="tb">B · Dejar que el orquestador decida</button></div>
+
+<div id="ma">
+<div class="f"><label>Cadena de eventos<input type="text" id="cad" placeholder="ejemplo: srsrdf">
+<span class="s">Escribe letras seguidas o usa los botones. Vacío = cadena vacía ε.</span></label></div>
+<div class="ex">Añadir evento:
+<button class="chip" data-s="d" title="hay capacidad">d</button><button class="chip" data-s="s" title="saturación">s</button><button class="chip" data-s="r" title="reintento autorizado">r</button><button class="chip" data-s="f" title="fin de la atención">f</button><button class="chip" data-s="x" title="rechazo o cancelación">x</button>
+<button id="bc">Borrar</button></div>
+<p class="s">d = hay capacidad · s = saturación · r = reintento autorizado · f = fin de la atención · x = rechazo o cancelación</p>
+<div class="ex"><button class="go" id="ba">▶ Ejecutar cadena</button> Ejemplos:
+<button data-e="srsrdf">Ciclo de reintento</button><button data-e="dx">Rechazo</button><button data-e="sdy">Símbolo inválido</button><button data-e="">Cadena vacía</button></div>
+</div>
+
+<div id="mb" hidden>
+<div class="f">
+<label>Instante en que llega la solicitud (t)<input type="number" id="t0" value="8" min="0">
+<span class="s">En segundos. Las revisiones ocurren en t = 2, 7, 12, 17, 22…</span></label>
+<label>¿Desde qué instante hay capacidad?<input type="number" id="ds" value="17" min="0" placeholder="nunca">
+<span class="s">Antes de ese instante todos los servicios están saturados. Vacío = nunca hay capacidad.</span></label>
+<label>¿La solicitud es válida? (V)<input type="checkbox" id="vv" checked style="width:20px;height:20px">
+<span class="s">Desmárcala para simular una solicitud inválida o cancelada.</span></label>
+</div>
+<div class="ex"><button class="go" id="bs">▶ Simular</button> Ejemplos:
+<button id="e1">Éxito tras 2 reintentos</button><button id="e2">Reintentos agotados</button><button id="e3">Solicitud inválida</button></div>
+</div></div>
+
+<div class="p" id="s2"><h2><span class="n">2</span>Mira el recorrido</h2>
+<div class="dg"><svg id="svg" viewBox="0 0 760 400"></svg></div>
+<div class="leg"><span><i style="background:var(--ac);border-color:var(--ac)"></i>estado actual</span><span><i style="background:var(--acl)"></i>ya visitado</span><span><i style="border-color:var(--ok)"></i>aceptación</span><span><i style="border-color:var(--rj)"></i>rechazo</span></div>
+<p class="s">Naranja = camino recorrido (la flecha gruesa es el último paso). Se dibujan solo las 7 transiciones que no van a qr; las otras 23 de la tabla llevan a qr.</p>
+<div class="ruta" id="ruta"></div>
+<div class="pg"><i id="pgi"></i></div>
+<div class="msg" id="msg"></div>
+<div class="nav"><button id="p0">↺ Desde el inicio</button><button id="p1">◀ Paso anterior</button><button id="p2" class="go">Paso siguiente ▶</button><button id="p3">Ir al final ⏭</button></div>
+<div id="lg"></div></div>
+
+<div class="p" id="s3"><h2><span class="n">3</span>Tabla de transición δ</h2>
+<p class="s">Es la Tabla 5 del informe. Naranja = celdas que usó la ejecución (la fuerte es el último paso). Las transiciones a qr aparecen atenuadas.</p>
+<table id="tt"></table></div>
+
+<div class="p" id="s4"><h2><span class="n">4</span>Pruebas automáticas</h2>
+<button class="go" id="bt">▶ Correr todas las pruebas</button><div id="pt" class="tout" hidden></div></div>
+
+</div></div>
+<script>
+const $=id=>document.getElementById(id);
+const api=async u=>{const r=await fetch(u),j=await r.json();if(!r.ok)throw Error(j.error);return j};
+const safe=f=>async(...a)=>{try{await f(...a)}catch(e){alert("Error: "+e.message+"\n¿Está corriendo servidor.py?")}};
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const NOM={q0:"Recibida",q1:"Asignada",q2:"Saturada",q3:"En reintento",q4:"Concluida",qr:"Rechazada"};
+const EV={d:"hay capacidad, se asigna",s:"saturación, no hay capacidad",r:"reintento autorizado",f:"fin de la atención",x:"rechazo o cancelación"};
+const WHY={A:"A = V∧C = 1: la solicitud es válida y hay capacidad, así que emite d",N:"N = V∧¬C = 1: es válida pero no hay capacidad, así que emite s",X1:"X₁ = ¬V = 1: la solicitud es inválida o fue cancelada, así que emite x",P:"P = V∧¬L = 1: es válida y n < 3 (aún quedan reintentos), así que emite r",X2:"X₂ = ¬V∨L = 1: se alcanzó el límite de reintentos (n ≥ 3) o es inválida, así que emite x (R4)",fin:"el servicio reporta que terminó la atención, así que emite f (no depende de V ni de C)"};const POS={q0:[80,190],q1:[260,80],q2:[260,290],q3:[470,190],q4:[470,50],qr:[690,190]},R=34;
+const DESC={q0d:"La verificación fue positiva: se asigna la solicitud a un servicio.",q0s:"No hay capacidad: la solicitud queda saturada y espera la revisión periódica.",q1f:"El servicio terminó la atención: la solicitud concluye.",q2s:"Sigue sin haber capacidad: continúa esperando.",q2r:"Terminó la espera y se autorizó un reintento: falta volver a verificar.",q3d:"La nueva verificación fue positiva: se asigna la solicitud.",q3s:"La nueva verificación sigue sin capacidad: vuelve a esperar."};
+const ARI=[["q0","q1","d"],["q0","q2","s"],["q1","q4","f"],["q2","q2","s"],["q2","q3","r"],["q3","q1","d"],["q3","q2","s"]];
+const CURVA={"q2|q3":28,"q3|q2":28};
+let M,pasos=[],k=0,datos=null,inval=null;
+
+function camino(a,b){
+ const[x1,y1]=POS[a],[x2,y2]=POS[b];
+ if(a===b)return{d:`M${x1-16} ${y1+30}C${x1-44} ${y1+84} ${x1+44} ${y1+84} ${x1+16} ${y1+30}`,x:x1,y:y1+86};
+ const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),o=CURVA[a+"|"+b]||0,nx=-dy/L,ny=dx/L;
+ const cx=(x1+x2)/2+nx*o*2,cy=(y1+y2)/2+ny*o*2;
+ const rec=(px,py,qx,qy)=>{const d=Math.hypot(qx-px,qy-py);return[px+(qx-px)/d*R,py+(qy-py)/d*R]};
+ const[sx,sy]=rec(x1,y1,cx,cy),[ex,ey]=rec(x2,y2,cx,cy);
+ return{d:`M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}`,x:.25*sx+.5*cx+.25*ex+nx*14,y:.25*sy+.5*cy+.25*ey+ny*14+4};
+}
+
+function dibujar(){
+ let h=`<defs><marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a93a8"/></marker>
+ <marker id="mh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f97316"/></marker></defs>
+ <line x1="10" y1="190" x2="${POS.q0[0]-R-3}" y2="190" class="ar" style="stroke-width:1.9"/>`;
+ let lab="";
+ for(const[a,b,s]of ARI){const c=camino(a,b);h+=`<path id="e${a}${s}" class="ar" d="${c.d}"/>`;lab+=`<text class="lb" x="${c.x}" y="${c.y}">${s}</text>`}
+ for(const q of M.Q){
+  const[x,y]=POS[q];
+  h+=`<g class="nd ${q}" id="n${q}" transform="translate(${x},${y})"><circle class="m" r="${R}"/>`+
+   (M.F.includes(q)?`<circle class="i" r="${R-5}"/>`:"")+
+   `<text y="-2" font-size="17" font-weight="700">${q}</text><text y="13" font-size="10">${NOM[q]}</text></g>`;
+ }
+ h+=lab+`<text class="note" x="690" y="248">cualquier otro evento</text><text class="note" x="690" y="262">llega aquí (ver tabla)</text>`;
+ $("svg").innerHTML=h;
+}
+
+function tabla(){
+ $("tt").innerHTML="<tr><th>Estado</th>"+M.SIGMA.map(s=>"<th>"+s+"</th>").join("")+"</tr>"+
+  M.Q.map(q=>"<tr><th>"+(q===M.q0?"→ ":"")+q+(M.F.includes(q)?" *":"")+"</th>"+
+   M.tabla[q].split(" ").map((d,i)=>`<td data-q="${q}" data-s="${M.SIGMA[i]}" class="${d===M.qr?"gr":""}">${d}</td>`).join("")+"</tr>").join("");
+}
+
+function render(){
+ const u=pasos.slice(0,k),ult=u[k-1],act=ult?ult.a:M.q0,ok=datos&&!inval,fin=ok&&k===pasos.length;
+ for(const q of M.Q){const c=$("n"+q).classList;c.toggle("act",q===act);c.toggle("vis",q===M.q0||u.some(p=>p.a===q))}
+ document.querySelectorAll(".ar").forEach(e=>e.classList.remove("u","a"));
+ u.forEach(p=>{const e=$("e"+p.de+p.simbolo);if(e)e.classList.add("u")});
+ if(ult){const e=$("e"+ult.de+ult.simbolo);if(e)e.classList.add("a")}
+ document.querySelectorAll("#tt td").forEach(td=>{
+  const q=td.dataset.q,s=td.dataset.s;
+  td.classList.toggle("u",u.some(p=>p.de===q&&p.simbolo===s));
+  td.classList.toggle("a",!!ult&&ult.de===q&&ult.simbolo===s);
+ });
+ $("ruta").innerHTML=ok?[M.q0,...pasos.map(p=>p.a)].map((q,i)=>`<span class="pl ${i===k?"on":i>k?"f2":""}">${q}</span>`).join('<span class="arr">→</span>'):"";
+ $("pgi").style.width=(ok&&pasos.length?k/pasos.length*100:0)+"%";
+ let m;
+ if(!datos)m="Elige un modo arriba, completa los datos y pulsa el botón de ejecutar.";
+ else if(inval)m=inval.map(([i,c])=>`<span class="no">Entrada inválida</span> «${c}» (posición ${i}) no pertenece a Σ = {d, s, r, f, x}.`).join("<br>")+"<br>La cadena no se envía a δ y el programa sigue funcionando.";
+ else{
+  const L=ult&&ult.log,t=L&&L.t;
+  m=!ult?`Inicio: la solicitud está en <b>q0</b> (Recibida). Pulsa «Paso siguiente».`:
+   `<b>Paso ${k} de ${pasos.length}</b> · <b>${ult.de}</b> (${NOM[ult.de]}) —${ult.simbolo}→ <b>${ult.a}</b> (${NOM[ult.a]})`+
+   `<br><b>Qué pasó:</b> llegó el evento <b>${ult.simbolo}</b> (${EV[ult.simbolo]}). ${DESC[ult.de+ult.simbolo]||(ult.de===M.qr?"qr es absorbente: ningún evento la saca de ahí.":"Evento no permitido en este estado (falla, cancelación o fuera de orden): la solicitud se rechaza.")}`+
+   `<br><b>Transición:</b> δ(${ult.de}, ${ult.simbolo}) = ${ult.a}`+
+   (L?`<br><b>Orquestador (t = ${t}):</b> ${WHY[L.expr]}.`+(ult.de==="q2"&&"rx".includes(ult.simbolo)?` Es instante de revisión porque ${t} mod 5 = 2.`:"")+` Reintentos hasta ahora: n = ${L.n}.`:"");
+  if(fin){
+   const q=datos.final,por=datos.aceptada?"la solicitud se verificó, se asignó y concluyó en ese orden.":q===M.qr?"qr es absorbente: una vez rechazada, ningún evento la revive.":"todavía no concluyó, pero tampoco fue rechazada.";
+   m+=`<hr class="sep"><b>Resultado:</b> δ*(q0, ${datos.cadena||"ε"}) = <b>${q}</b> → <span class="${datos.aceptada?"ok":"no"}">${datos.aceptada?"ACEPTADA":"NO ACEPTADA"}</span> (${datos.clasificacion}). ${por}`}
+ }
+ $("msg").innerHTML=m;
+ $("msg").className="msg"+(inval?" bad":fin?(datos.aceptada?" good":" bad"):""); $("msg").className="msg"+(inval?" bad":fin?(datos.aceptada?" good":datos.final===M.qr?" bad":""):""); $("p0").disabled=!ok||k===0;$("p1").disabled=!ok||k===0;$("p2").disabled=!ok||k===pasos.length;$("p3").disabled=!ok||k===pasos.length;
+}
+
+function cargar(r,log){
+ datos=r;inval=r.valida?null:r.invalidos;
+ pasos=r.valida?r.cadena.split("").map((s,i)=>({de:r.recorrido[i],simbolo:s,a:r.recorrido[i+1],log:log&&log[i]})):[];
+ k=pasos.length;render();
+}
+
+const ejecutarA=safe(async()=>{
+ const r=await api("/api/procesar?cadena="+encodeURIComponent($("cad").value));
+ $("lg").innerHTML="";cargar(r);
+});
+const simular=safe(async()=>{
+ const j=await api(`/api/simular?t=${$("t0").value||0}&desde=${$("ds").value}&v=${$("vv").checked?1:0}`);
+ $("lg").innerHTML=`<p class="s">Cadena que emitió el orquestador: <b>${j.cadena}</b>. Esa cadena es la que procesa el AFD.</p>`;
+ cargar(j.resultado,j.log);
+});
+function modo(b){$("ma").hidden=b;$("mb").hidden=!b;$("ta").classList.toggle("on",!b);$("tb").classList.toggle("on",b)}
+function ejB(t,d,v){$("t0").value=t;$("ds").value=d;$("vv").checked=v;simular()}
+function fmt(t){return t.split("\n").filter(l=>l.trim()).map(l=>
+ l.startsWith("OK")?`<div class="y">✓ ${esc(l.slice(2).trim())}</div>`:
+ l.startsWith("FALLA")?`<div class="z">✗ ${esc(l.slice(5).trim())}</div>`:
+ l.startsWith("--")?`<div class="h">${esc(l.replace(/^-+\s*|\s*-+$/g,""))}</div>`:
+ `<div class="sm">${esc(l)}</div>`).join("")}
+
+$("ta").onclick=()=>modo(false);$("tb").onclick=()=>modo(true);
+document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>$("cad").value+=b.dataset.s);
+$("bc").onclick=()=>$("cad").value="";
+$("ba").onclick=ejecutarA;$("bs").onclick=simular;
+$("cad").onkeydown=e=>{if(e.key==="Enter")ejecutarA()};
+document.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{$("cad").value=b.dataset.e;ejecutarA()});
+$("e1").onclick=()=>ejB(8,17,true);$("e2").onclick=()=>ejB(8,"",true);$("e3").onclick=()=>ejB(8,17,false);
+$("p0").onclick=()=>{k=0;render()};$("p1").onclick=()=>{k--;render()};
+$("p2").onclick=()=>{k++;render()};$("p3").onclick=()=>{k=pasos.length;render()};
+$("bt").onclick=safe(async()=>{
+ const t=$("pt");t.hidden=false;t.textContent="Corriendo...";
+ t.innerHTML=fmt((await api("/api/pruebas")).salida);
+});
+$("th").onclick=()=>{
+ const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+ r.dataset.theme=d?"light":"dark";
+};
+
+(async()=>{M=await api("/api/modelo");dibujar();tabla();render()})();
+</script></body></html>
